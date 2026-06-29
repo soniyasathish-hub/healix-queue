@@ -1,0 +1,141 @@
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { type ReactNode, useEffect } from "react";
+import { useAuth, pickHomePath, type AppRole } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard, Calendar, Users, Stethoscope, ListOrdered, FileText,
+  LogOut, Activity, Settings, Building2, Bell, ClipboardList, Sparkles,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface NavItem { to: string; label: string; icon: typeof LayoutDashboard }
+
+const NAV: Record<AppRole, NavItem[]> = {
+  patient: [
+    { to: "/patient", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/patient/doctors", label: "Find Doctors", icon: Stethoscope },
+    { to: "/patient/appointments", label: "My Appointments", icon: Calendar },
+    { to: "/patient/queue", label: "Live Queue", icon: ListOrdered },
+    { to: "/patient/reports", label: "Medical Reports", icon: FileText },
+  ],
+  doctor: [
+    { to: "/doctor", label: "Today's Queue", icon: LayoutDashboard },
+    { to: "/doctor/appointments", label: "Appointments", icon: Calendar },
+    { to: "/doctor/patients", label: "Patients", icon: Users },
+  ],
+  receptionist: [
+    { to: "/reception", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/reception/checkin", label: "Check-in", icon: ClipboardList },
+    { to: "/reception/appointments", label: "Appointments", icon: Calendar },
+  ],
+  admin: [
+    { to: "/admin", label: "Overview", icon: LayoutDashboard },
+    { to: "/admin/doctors", label: "Doctors", icon: Stethoscope },
+    { to: "/admin/departments", label: "Departments", icon: Building2 },
+    { to: "/admin/appointments", label: "Appointments", icon: Calendar },
+    { to: "/admin/users", label: "Users", icon: Users },
+    { to: "/admin/settings", label: "Settings", icon: Settings },
+  ],
+};
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const { user, roles, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/auth", search: { redirect: path } as never });
+  }, [loading, user, navigate, path]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="size-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  const role: AppRole =
+    roles.includes("admin") ? "admin" :
+    roles.includes("doctor") ? "doctor" :
+    roles.includes("receptionist") ? "receptionist" : "patient";
+  const items = NAV[role];
+
+  return (
+    <div className="min-h-screen gradient-soft">
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="hidden md:flex w-64 shrink-0 h-screen sticky top-0 flex-col glass border-r border-border/50">
+          <Link to="/" className="flex items-center gap-2 px-6 h-16 border-b border-border/50">
+            <div className="size-9 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+              <Activity className="size-5 text-white" />
+            </div>
+            <div>
+              <div className="font-display font-bold leading-tight">QueueLess</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">AI Hospital</div>
+            </div>
+          </Link>
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
+            {items.map((it) => {
+              const active = path === it.to || (it.to !== `/${role}` && path.startsWith(it.to));
+              const Icon = it.icon;
+              return (
+                <Link
+                  key={it.to}
+                  to={it.to}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                    active
+                      ? "gradient-primary text-primary-foreground shadow-elegant"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {it.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="p-3 border-t border-border/50">
+            <div className="px-3 py-2 text-xs text-muted-foreground capitalize">Signed in as {role}</div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={async () => { await signOut(); navigate({ to: "/" }); }}
+            >
+              <LogOut className="size-4" /> Sign out
+            </Button>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 min-w-0">
+          <header className="sticky top-0 z-30 glass border-b border-border/50">
+            <div className="flex h-16 items-center justify-between px-4 md:px-8">
+              <div className="md:hidden flex items-center gap-2">
+                <div className="size-8 rounded-lg gradient-primary flex items-center justify-center">
+                  <Activity className="size-4 text-white" />
+                </div>
+                <span className="font-display font-bold">QueueLess</span>
+              </div>
+              <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="size-4 text-primary" />
+                AI-powered queue intelligence active
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => navigate({ to: pickHomePath(roles) })}>
+                  <Bell className="size-4" />
+                </Button>
+                <div className="size-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
+                  {(user.email ?? "U")[0].toUpperCase()}
+                </div>
+              </div>
+            </div>
+          </header>
+          <div className="p-4 md:p-8 max-w-[1400px] mx-auto">{children}</div>
+        </main>
+      </div>
+    </div>
+  );
+}
