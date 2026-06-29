@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReceptionIndexRouteImport } from './routes/reception.index'
 import { Route as PatientIndexRouteImport } from './routes/patient.index'
 import { Route as DoctorIndexRouteImport } from './routes/doctor.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ReceptionCheckinRouteImport } from './routes/reception.checkin'
 import { Route as ReceptionAppointmentsRouteImport } from './routes/reception.appointments'
 import { Route as PatientReportsRouteImport } from './routes/patient.reports'
@@ -26,6 +27,11 @@ import { Route as PatientDoctorsRouteImport } from './routes/patient.doctors'
 import { Route as PatientAppointmentsRouteImport } from './routes/patient.appointments'
 import { Route as DoctorPatientsRouteImport } from './routes/doctor.patients'
 import { Route as DoctorAppointmentsRouteImport } from './routes/doctor.appointments'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminDoctorsRouteImport } from './routes/admin.doctors'
+import { Route as AdminDepartmentsRouteImport } from './routes/admin.departments'
+import { Route as AdminAppointmentsRouteImport } from './routes/admin.appointments'
 
 const ReceptionRoute = ReceptionRouteImport.update({
   id: '/reception',
@@ -72,6 +78,11 @@ const DoctorIndexRoute = DoctorIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DoctorRoute,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ReceptionCheckinRoute = ReceptionCheckinRouteImport.update({
   id: '/checkin',
   path: '/checkin',
@@ -112,14 +123,44 @@ const DoctorAppointmentsRoute = DoctorAppointmentsRouteImport.update({
   path: '/appointments',
   getParentRoute: () => DoctorRoute,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDoctorsRoute = AdminDoctorsRouteImport.update({
+  id: '/doctors',
+  path: '/doctors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDepartmentsRoute = AdminDepartmentsRouteImport.update({
+  id: '/departments',
+  path: '/departments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/doctor': typeof DoctorRouteWithChildren
   '/patient': typeof PatientRouteWithChildren
   '/reception': typeof ReceptionRouteWithChildren
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/departments': typeof AdminDepartmentsRoute
+  '/admin/doctors': typeof AdminDoctorsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/doctor/appointments': typeof DoctorAppointmentsRoute
   '/doctor/patients': typeof DoctorPatientsRoute
   '/patient/appointments': typeof PatientAppointmentsRoute
@@ -128,14 +169,19 @@ export interface FileRoutesByFullPath {
   '/patient/reports': typeof PatientReportsRoute
   '/reception/appointments': typeof ReceptionAppointmentsRoute
   '/reception/checkin': typeof ReceptionCheckinRoute
+  '/admin/': typeof AdminIndexRoute
   '/doctor/': typeof DoctorIndexRoute
   '/patient/': typeof PatientIndexRoute
   '/reception/': typeof ReceptionIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/departments': typeof AdminDepartmentsRoute
+  '/admin/doctors': typeof AdminDoctorsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/doctor/appointments': typeof DoctorAppointmentsRoute
   '/doctor/patients': typeof DoctorPatientsRoute
   '/patient/appointments': typeof PatientAppointmentsRoute
@@ -144,6 +190,7 @@ export interface FileRoutesByTo {
   '/patient/reports': typeof PatientReportsRoute
   '/reception/appointments': typeof ReceptionAppointmentsRoute
   '/reception/checkin': typeof ReceptionCheckinRoute
+  '/admin': typeof AdminIndexRoute
   '/doctor': typeof DoctorIndexRoute
   '/patient': typeof PatientIndexRoute
   '/reception': typeof ReceptionIndexRoute
@@ -151,11 +198,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/doctor': typeof DoctorRouteWithChildren
   '/patient': typeof PatientRouteWithChildren
   '/reception': typeof ReceptionRouteWithChildren
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/departments': typeof AdminDepartmentsRoute
+  '/admin/doctors': typeof AdminDoctorsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/doctor/appointments': typeof DoctorAppointmentsRoute
   '/doctor/patients': typeof DoctorPatientsRoute
   '/patient/appointments': typeof PatientAppointmentsRoute
@@ -164,6 +216,7 @@ export interface FileRoutesById {
   '/patient/reports': typeof PatientReportsRoute
   '/reception/appointments': typeof ReceptionAppointmentsRoute
   '/reception/checkin': typeof ReceptionCheckinRoute
+  '/admin/': typeof AdminIndexRoute
   '/doctor/': typeof DoctorIndexRoute
   '/patient/': typeof PatientIndexRoute
   '/reception/': typeof ReceptionIndexRoute
@@ -177,6 +230,11 @@ export interface FileRouteTypes {
     | '/doctor'
     | '/patient'
     | '/reception'
+    | '/admin/appointments'
+    | '/admin/departments'
+    | '/admin/doctors'
+    | '/admin/settings'
+    | '/admin/users'
     | '/doctor/appointments'
     | '/doctor/patients'
     | '/patient/appointments'
@@ -185,14 +243,19 @@ export interface FileRouteTypes {
     | '/patient/reports'
     | '/reception/appointments'
     | '/reception/checkin'
+    | '/admin/'
     | '/doctor/'
     | '/patient/'
     | '/reception/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/auth'
+    | '/admin/appointments'
+    | '/admin/departments'
+    | '/admin/doctors'
+    | '/admin/settings'
+    | '/admin/users'
     | '/doctor/appointments'
     | '/doctor/patients'
     | '/patient/appointments'
@@ -201,6 +264,7 @@ export interface FileRouteTypes {
     | '/patient/reports'
     | '/reception/appointments'
     | '/reception/checkin'
+    | '/admin'
     | '/doctor'
     | '/patient'
     | '/reception'
@@ -212,6 +276,11 @@ export interface FileRouteTypes {
     | '/doctor'
     | '/patient'
     | '/reception'
+    | '/admin/appointments'
+    | '/admin/departments'
+    | '/admin/doctors'
+    | '/admin/settings'
+    | '/admin/users'
     | '/doctor/appointments'
     | '/doctor/patients'
     | '/patient/appointments'
@@ -220,6 +289,7 @@ export interface FileRouteTypes {
     | '/patient/reports'
     | '/reception/appointments'
     | '/reception/checkin'
+    | '/admin/'
     | '/doctor/'
     | '/patient/'
     | '/reception/'
@@ -227,7 +297,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DoctorRoute: typeof DoctorRouteWithChildren
   PatientRoute: typeof PatientRouteWithChildren
@@ -299,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoctorIndexRouteImport
       parentRoute: typeof DoctorRoute
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/reception/checkin': {
       id: '/reception/checkin'
       path: '/checkin'
@@ -355,8 +432,63 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoctorAppointmentsRouteImport
       parentRoute: typeof DoctorRoute
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/doctors': {
+      id: '/admin/doctors'
+      path: '/doctors'
+      fullPath: '/admin/doctors'
+      preLoaderRoute: typeof AdminDoctorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/departments': {
+      id: '/admin/departments'
+      path: '/departments'
+      fullPath: '/admin/departments'
+      preLoaderRoute: typeof AdminDepartmentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/appointments': {
+      id: '/admin/appointments'
+      path: '/appointments'
+      fullPath: '/admin/appointments'
+      preLoaderRoute: typeof AdminAppointmentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminAppointmentsRoute: typeof AdminAppointmentsRoute
+  AdminDepartmentsRoute: typeof AdminDepartmentsRoute
+  AdminDoctorsRoute: typeof AdminDoctorsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAppointmentsRoute: AdminAppointmentsRoute,
+  AdminDepartmentsRoute: AdminDepartmentsRoute,
+  AdminDoctorsRoute: AdminDoctorsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface DoctorRouteChildren {
   DoctorAppointmentsRoute: typeof DoctorAppointmentsRoute
@@ -410,7 +542,7 @@ const ReceptionRouteWithChildren = ReceptionRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DoctorRoute: DoctorRouteWithChildren,
   PatientRoute: PatientRouteWithChildren,
