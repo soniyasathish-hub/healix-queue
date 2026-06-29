@@ -37,9 +37,9 @@ export const predictWaitTime = createServerFn({ method: "POST" })
 
     try {
       const gateway = createLovableAiGatewayProvider(key);
-      const { experimental_output } = await generateText({
+      const { output } = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
-        experimental_output: Output.object({ schema: OutputSchema }),
+        output: Output.object({ schema: OutputSchema }),
         prompt: `You are an AI scheduler for a hospital queue system. Predict the patient's waiting time.
 
 Context:
@@ -52,7 +52,7 @@ Context:
 
 Estimate realistic waiting time in minutes considering emergencies add ~8 min each, peak hours (9-11am, 5-7pm) add 15% delay, and natural variation. Return a confidence percentage (50-99) and a one-sentence reasoning.`,
       });
-      return experimental_output;
+      return output;
     } catch (e) {
       console.error("AI prediction failed", e);
       const base = data.positionInQueue * data.avgConsultationMinutes;
