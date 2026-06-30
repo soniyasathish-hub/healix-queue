@@ -43,6 +43,7 @@ function Landing() {
           <nav className="hidden md:flex items-center gap-8 text-sm">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition">Features</a>
             <a href="#how" className="text-muted-foreground hover:text-foreground transition">How it works</a>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition">Pricing</a>
             <a href="#stats" className="text-muted-foreground hover:text-foreground transition">Impact</a>
           </nav>
           <div className="flex items-center gap-2">
@@ -210,6 +211,86 @@ function Landing() {
                 <s.i className="size-8 text-primary mt-3" />
                 <div className="mt-3 font-display font-semibold">{s.t}</div>
                 <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="py-24">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-4xl font-display font-bold tracking-tight">Loved by care teams</h2>
+            <p className="mt-3 text-muted-foreground">From district clinics to multi-specialty hospitals.</p>
+          </div>
+          <div className="mt-14 grid md:grid-cols-3 gap-5">
+            {[
+              { q: "We cut our average OPD wait from 47 minutes to 12. Patients are calmer, staff are happier.", n: "Dr. Meera Iyer", r: "Chief of Operations, Apex Care" },
+              { q: "Onboarding took a weekend. The AI ETA is scarily accurate — within 3 minutes most of the time.", n: "Rohan Patel", r: "Hospital Administrator, Greenwood" },
+              { q: "Our receptionists no longer drown in phone calls. The QR check-in alone paid for the platform.", n: "Sister Anne", r: "Head Nurse, St. Margaret's" },
+            ].map((t) => (
+              <div key={t.n} className="glass-card rounded-2xl p-6">
+                <div className="text-warning text-sm">★★★★★</div>
+                <p className="mt-3 text-sm leading-relaxed">"{t.q}"</p>
+                <div className="mt-5 flex items-center gap-3">
+                  <div className="size-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-display font-bold">
+                    {t.n.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">{t.n}</div>
+                    <div className="text-xs text-muted-foreground">{t.r}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="py-24 gradient-soft">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-4xl font-display font-bold tracking-tight">Simple, transparent pricing</h2>
+            <p className="mt-3 text-muted-foreground">Start free. Scale as your hospital grows.</p>
+          </div>
+          <div className="mt-14 grid md:grid-cols-3 gap-5">
+            {[
+              { n: "Clinic", p: "Free", d: "For small practices getting started.", f: ["Up to 3 doctors", "Digital tokens & QR", "Patient app", "Email support"], cta: "Get started" },
+              { n: "Hospital", p: "$199", s: "/mo", d: "For growing multi-department hospitals.", f: ["Unlimited doctors", "AI wait-time engine", "Live queue displays", "All 4 dashboards", "Priority support"], cta: "Start free trial", featured: true },
+              { n: "Enterprise", p: "Custom", d: "Multi-branch chains with custom integrations.", f: ["Multi-hospital tenancy", "HL7 / FHIR integrations", "SSO + audit logs", "Dedicated success manager"], cta: "Talk to sales" },
+            ].map((t) => (
+              <div
+                key={t.n}
+                className={`relative glass-card rounded-2xl p-7 flex flex-col ${t.featured ? "ring-2 ring-primary shadow-elegant-lg" : ""}`}
+              >
+                {t.featured && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full gradient-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-wider">
+                    Most popular
+                  </div>
+                )}
+                <div className="font-display font-bold text-lg">{t.n}</div>
+                <p className="mt-1 text-sm text-muted-foreground">{t.d}</p>
+                <div className="mt-5 flex items-baseline gap-1">
+                  <div className="text-4xl font-display font-bold">{t.p}</div>
+                  {t.s && <div className="text-sm text-muted-foreground">{t.s}</div>}
+                </div>
+                <ul className="mt-5 space-y-2 text-sm flex-1">
+                  {t.f.map((x) => (
+                    <li key={x} className="flex items-start gap-2">
+                      <CheckCircle2 className="size-4 text-success mt-0.5 shrink-0" />
+                      <span>{x}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className={`mt-6 ${t.featured ? "gradient-primary text-primary-foreground" : ""}`}
+                  variant={t.featured ? "default" : "outline"}
+                  onClick={() => navigate({ to: user ? home : "/auth" })}
+                >
+                  {t.cta}
+                </Button>
               </div>
             ))}
           </div>

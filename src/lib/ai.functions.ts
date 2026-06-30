@@ -1,4 +1,4 @@
-// AI-powered waiting time prediction.
+// AI-powered server functions.
 import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output } from "ai";
 import { z } from "zod";
@@ -25,11 +25,9 @@ export const predictWaitTime = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) {
-      // Heuristic fallback if AI key missing
       const base = data.positionInQueue * data.avgConsultationMinutes;
-      const emergencyBuffer = data.emergencyCount * 8;
       return {
-        estimatedMinutes: Math.max(0, base + emergencyBuffer),
+        estimatedMinutes: Math.max(0, base + data.emergencyCount * 8),
         confidence: 78,
         reasoning: "Statistical estimate based on queue position and average consultation time.",
       };
@@ -61,5 +59,70 @@ Estimate realistic waiting time in minutes considering emergencies add ~8 min ea
         confidence: 75,
         reasoning: "Fallback estimate (AI service unavailable).",
       };
+    }
+  });
+
+/* ============ AI Chatbot — patient health assistant ============ */
+
+const ChatInput = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().max(2000),
+  })).min(1).max(40),
+});
+
+export const chatWithAssistant = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => ChatInput.parse(d))
+  .handler(async ({ data }) => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) return { reply: "AI assistant is currently unavailable. Please contact the hospital directly." };
+    try {
+      const gateway = createLovableAiGatewayProvider(key);
+      const { text } = await generateText({
+        model: gateway("google/gemini-3-flash-preview"),
+        system: `You are QueueLess Health Assistant, a friendly AI for a hospital app.
+- Help patients understand symptoms in plain language and recommend the right department (Cardiology, Neurology, Orthopedics, Pediatrics, General Medicine, etc.).
+- Suggest booking an appointment, checking the live queue, or uploading reports inside the app.
+- Never diagnose. Always recommend seeing a doctor for anything serious.
+- For emergencies (chest pain, difficulty breathing, severe bleeding, stroke signs) instruct the user to call emergency services immediately.
+- Keep replies under 120 words, warm, and clear. Use short paragraphs or bullet points.`,
+        messages: data.messages.map((m) => ({ role: m.role, content: m.content })),
+      });
+      return { reply: text };
+    } catch (e) {
+      console.error("Chat failed", e);
+      return { reply: "Sorry, I had trouble responding. Please try again in a moment." };
+    }
+  });
+
+/* ============ AI Medical Report Summary ============ */
+
+const SummaryInput = z.object({
+  title: z.string(),
+  fileType: z.string().optional(),
+});
+
+export const summarizeReport = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => SummaryInput.parse(d))
+  .handler(async ({ data }) => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) {
+      return { summary: "AI summary unavailable. Please review the file with your doctor." };
+    }
+    try {
+      const gateway = createLovableAiGatewayProvider(key);
+      const { text } = await generateText({
+        model: gateway("google/gemini-3-flash-preview"),
+        system: "You are a medical AI assistant explaining medical report titles to patients in plain language. Always include a disclaimer that this is not medical advice.",
+        prompt: `A patient uploaded a medical report titled: "${data.title}" (${data.fileType ?? "unknown type"}).
+Without seeing the contents, give them a brief (under 90 words) friendly orientation:
+- What this type of report usually contains
+- What metrics or sections to look at
+- A reminder to discuss results with their doctor.`,
+      });
+      return { summary: text };
+    } catch (e) {
+      console.error("Summary failed", e);
+      return { summary: "Unable to generate summary right now." };
     }
   });
