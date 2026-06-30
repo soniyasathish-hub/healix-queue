@@ -16,7 +16,23 @@ export const Route = createFileRoute("/patient/reports")({ component: ReportsPag
 function ReportsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const aiSummary = useServerFn(summarizeReport);
   const [busy, setBusy] = useState(false);
+  const [title, setTitle] = useState("");
+  const [summaries, setSummaries] = useState<Record<string, string>>({});
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+
+  async function getSummary(id: string, t: string, ft?: string | null) {
+    setSummarizingId(id);
+    try {
+      const res = await aiSummary({ data: { title: t, fileType: ft ?? undefined } });
+      setSummaries((s) => ({ ...s, [id]: res.summary }));
+    } catch {
+      toast.error("Could not generate summary");
+    } finally {
+      setSummarizingId(null);
+    }
+  }
   const [title, setTitle] = useState("");
 
   const { data: reports = [] } = useQuery({
@@ -88,18 +104,29 @@ function ReportsPage() {
         {reports.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">No reports yet.</div>
         ) : reports.map((r) => (
-          <div key={r.id} className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center"><FileText className="size-5" /></div>
-              <div>
-                <div className="font-medium">{r.title}</div>
-                <div className="text-xs text-muted-foreground">{format(new Date(r.created_at), "MMM d, yyyy")}</div>
+          <div key={r.id} className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"><FileText className="size-5" /></div>
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{r.title}</div>
+                  <div className="text-xs text-muted-foreground">{format(new Date(r.created_at), "MMM d, yyyy")}</div>
+                </div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <Button size="sm" variant="ghost" onClick={() => getSummary(r.id, r.title, r.file_type)} disabled={summarizingId === r.id} title="AI summary">
+                  {summarizingId === r.id ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-primary" />}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => download(r.file_path)}><Download className="size-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => remove(r.id, r.file_path)}><Trash2 className="size-4 text-destructive" /></Button>
               </div>
             </div>
-            <div className="flex gap-1">
-              <Button size="sm" variant="ghost" onClick={() => download(r.file_path)}><Download className="size-4" /></Button>
-              <Button size="sm" variant="ghost" onClick={() => remove(r.id, r.file_path)}><Trash2 className="size-4 text-destructive" /></Button>
-            </div>
+            {summaries[r.id] && (
+              <div className="mt-3 ml-13 p-3 rounded-lg bg-primary/5 border border-primary/10 text-sm text-muted-foreground whitespace-pre-wrap">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-primary mb-1.5"><Sparkles className="size-3" /> AI Summary</div>
+                {summaries[r.id]}
+              </div>
+            )}
           </div>
         ))}
       </div>
