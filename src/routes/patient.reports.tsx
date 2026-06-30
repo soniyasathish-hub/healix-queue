@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Upload, Trash2, Download, Loader2 } from "lucide-react";
+import { FileText, Upload, Trash2, Download, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { summarizeReport } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/patient/reports")({ component: ReportsPage });
 
