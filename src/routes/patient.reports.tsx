@@ -33,7 +33,6 @@ function ReportsPage() {
       setSummarizingId(null);
     }
   }
-  const [title, setTitle] = useState("");
 
   const { data: reports = [] } = useQuery({
     queryKey: ["reports", user?.id],
