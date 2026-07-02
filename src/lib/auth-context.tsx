@@ -1,14 +1,27 @@
+/**
+ * JWT-based auth context. Replaces the previous Supabase-backed provider.
+ * All auth flows go through authService → Spring Boot AuthController.
+ */
 import { useEffect, useState, useCallback, createContext, useContext, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Session, User } from "@supabase/supabase-js";
+import { authService } from "@/services/authService";
+import { tokenStore } from "@/lib/api-client";
+import type { LoginRequest, RegisterRequest, Role, UserDto } from "@/types/api";
 
 export type AppRole = "admin" | "doctor" | "receptionist" | "patient";
 
+const ROLE_MAP: Record<Role, AppRole> = {
+  ADMIN: "admin",
+  DOCTOR: "doctor",
+  RECEPTIONIST: "receptionist",
+  PATIENT: "patient",
+};
+
 interface AuthState {
-  user: User | null;
-  session: Session | null;
+  user: UserDto | null;
   roles: AppRole[];
   loading: boolean;
+  login: (payload: LoginRequest) => Promise<void>;
+  register: (payload: RegisterRequest) => Promise<void>;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -16,41 +29,52 @@ interface AuthState {
 const AuthCtx = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
+  const [user, setUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadRoles = useCallback(async (uid: string | undefined) => {
-    if (!uid) { setRoles([]); return; }
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
-    setRoles((data ?? []).map((r) => r.role as AppRole));
+  const hydrate = useCallback(async () => {
+    if (!tokenStore.getAccess()) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    try {
+      const me = await authService.me();
+      setUser(me);
+    } catch {
+      tokenStore.clear();
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => {
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      // defer to avoid deadlock
-      setTimeout(() => { loadRoles(sess?.user?.id); }, 0);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      loadRoles(data.session?.user?.id).finally(() => setLoading(false));
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [loadRoles]);
+    // Read cached user immediately for instant UI, then re-verify with backend.
+    const cached = tokenStore.getUser<UserDto>();
+    if (cached) setUser(cached);
+    hydrate();
+  }, [hydrate]);
 
-  const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setRoles([]);
+  const login = useCallback(async (payload: LoginRequest) => {
+    const res = await authService.login(payload);
+    setUser(res.user);
   }, []);
 
-  const refreshRoles = useCallback(async () => { await loadRoles(user?.id); }, [user?.id, loadRoles]);
+  const register = useCallback(async (payload: RegisterRequest) => {
+    const res = await authService.register(payload);
+    setUser(res.user);
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await authService.logout();
+    setUser(null);
+  }, []);
+
+  const roles: AppRole[] = user ? [ROLE_MAP[user.role]] : [];
 
   return (
-    <AuthCtx.Provider value={{ user, session, roles, loading, signOut, refreshRoles }}>
+    <AuthCtx.Provider value={{ user, roles, loading, login, register, signOut, refreshRoles: hydrate }}>
       {children}
     </AuthCtx.Provider>
   );
